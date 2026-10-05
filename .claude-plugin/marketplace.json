@@ -1,0 +1,17 @@
+{
+  "name": "bens-claude-kits",
+  "description": "Spec-driven build kits for Claude Code",
+  "owner": { "name": "Ben Fielder" },
+  "plugins": [
+    {
+      "name": "nextjs-supabase-kit",
+      "source": "./plugins/nextjs-supabase-kit",
+      "description": "Next.js + TypeScript + Tailwind + Supabase on Vercel/GitHub: orchestrator, stack skills, SDLC subagents"
+    },
+    {
+      "name": "react-dotnet-k8s-kit",
+      "source": "./plugins/react-dotnet-k8s-kit",
+      "description": "React/Vite + .NET on GitLab, Kubernetes/ArgoCD: spec-from-jira, multi-repo orchestrator, stack skills, SDLC subagents"
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "name": "nextjs-supabase-kit",
+  "version": "1.0.0",
+  "description": "Spec-driven build kit for Next.js + TypeScript + Tailwind + Supabase apps on Vercel and GitHub: an orchestrator skill, stack workflow skills and specialised SDLC subagents.",
+  "author": { "name": "Ben" },
+  "keywords": ["nextjs", "supabase", "typescript", "tailwind", "vercel", "github", "orchestration", "subagents"]
+}
