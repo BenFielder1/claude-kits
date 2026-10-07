@@ -7,7 +7,7 @@
 ## Stack
 
 - **Frontend** (`frontend/`): TypeScript (strict) + React + Vite, <router>, <server-state lib>, <styling>, Vitest + Testing Library + MSW, Playwright
-- **Backend** (`backend/`): C# / ASP.NET Core (.NET <LTS version>), minimal APIs, EF Core + <SQL Server | PostgreSQL>, xUnit, Testcontainers
+- **Backend** (`backend/`): C# / ASP.NET Core (.NET <LTS version>), minimal APIs, EF Core (`dotnet-ef`) + PostgreSQL via Npgsql (snake_case naming), xUnit, Testcontainers.PostgreSql
 - **Contract**: `backend/openapi/api.json` (generated, committed) → `frontend/src/api/generated/` (generated)
 - **Deploy**: Docker images and Kustomize manifests (`deploy/k8s`) on the Docker Desktop Kubernetes cluster (context `docker-desktop`)
 - **VCS/CI**: Git, GitHub, GitHub Actions

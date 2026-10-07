@@ -3,7 +3,7 @@
 A spec-driven build kit for Claude Code. It builds **one repo** from **one `SPEC.md`**:
 - **Frontend:** TypeScript + React + Vite
 - **Backend:** C# + ASP.NET Core
-- **Database:** Microsoft EF Core (`dotnet-ef`), SQL Server by default, or PostgreSQL
+- **Database:** PostgreSQL through Microsoft EF Core and `dotnet-ef` (the Npgsql provider)
 - **Version control:** Git, GitHub and GitHub Actions
 - **Deployment:** the local **Docker Desktop Kubernetes** cluster
 
@@ -19,7 +19,7 @@ SPEC.md ──build-from-spec──▶ walking skeleton deployed to Docker Deskt
 | --- | --- | --- |
 | Skill | `build-from-spec` | Orchestrator: plans phases from the spec, briefs agents, gates, redeploys, commits, resumes from `PROGRESS.md` |
 | Skill | `aspnet-endpoints` | Domain rules, minimal APIs, ProblemDetails, Identity/cookie auth, health, tests |
-| Skill | `efcore-data` | EF Core model, `dotnet ef` migrations, seed, migration bundle for Kubernetes |
+| Skill | `efcore-data` | EF Core + Npgsql model (citext, xmin, UTC), `dotnet ef` migrations, seed, migration bundle for Kubernetes |
 | Skill | `vite-react-ui` | Generated client, TanStack Query, forms, permissions, states, MSW, tests |
 | Skill | `openapi-contract` | `backend/openapi/api.json` → `frontend/src/api/generated`, breaking-change rules |
 | Skill | `github-actions-ci` | Branch/PR conventions, CI jobs, freshness checks, Dependabot |

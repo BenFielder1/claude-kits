@@ -15,12 +15,12 @@ You set up the repo so every other agent can work safely and consistently.
 ## Set up (create mode)
 1. **Root:**
    - `.gitignore` (see the `github-actions-ci` skill), `.editorconfig`, `README.md` stub
-   - `docker-compose.yml`, with only the dev `db` service (SQL Server by default, or PostgreSQL if the spec says so), a named volume, a health check, and the password from `.env`; plus `.env.example`
+   - `docker-compose.yml`, with only the dev `db` service (PostgreSQL, pinned major, `pg_isready` health check, a named volume, port 5432, and DB, user and password from `.env`); plus `.env.example`
    - `git init` if needed
 2. **Backend** (`backend/`):
    - `global.json` pinned to the installed .NET LTS SDK, `Directory.Build.props` (nullable, warnings as errors, analyzers), `Directory.Packages.props` (central package management)
-   - the solution with `src/<App>.Api`, `src/<App>.Domain`, `src/<App>.Infrastructure`, `tests/<App>.UnitTests` and `tests/<App>.IntegrationTests` (xUnit, `Microsoft.AspNetCore.Mvc.Testing`, Testcontainers for the chosen DB)
-   - a local tool manifest with `dotnet-ef`, and EF Core with the provider and Design package
+   - the solution with `src/<App>.Api`, `src/<App>.Domain`, `src/<App>.Infrastructure`, `tests/<App>.UnitTests` and `tests/<App>.IntegrationTests` (xUnit, `Microsoft.AspNetCore.Mvc.Testing`, `Testcontainers.PostgreSql`)
+   - a local tool manifest with `dotnet-ef`; `Npgsql.EntityFrameworkCore.PostgreSQL` + `EFCore.NamingConventions` in Infrastructure; and `Microsoft.EntityFrameworkCore.Design` in the Api project. Wire up `UseNpgsql(...).UseSnakeCaseNamingConvention()`, create an initial empty migration, and apply it to the dev DB, to prove `dotnet ef` works end to end
    - in the Api: `AddProblemDetails`, OpenAPI with build-time generation into `backend/openapi/api.json` (see `openapi-contract`), health endpoints `/api/health/live` and `/api/health/ready`, `launchSettings.json` on port 5080, user-secrets initialised, and `public partial class Program;`
    - one integration test hitting `/api/health/live`
 3. **Frontend** (`frontend/`):
@@ -43,4 +43,4 @@ You set up the repo so every other agent can work safely and consistently.
 - No feature code beyond the smoke checks.
 
 ## Return (15 lines or fewer)
-Versions (.NET, EF Core, Node, React, Vite), the DB engine, the layout created, scripts and commands, the gate result, the rules written into CLAUDE.md (as a short list), and anything unexpected.
+Versions (.NET, EF Core, Npgsql provider, Postgres image, Node, React, Vite), the layout created, scripts and commands, the gate result, the rules written into CLAUDE.md (as a short list), and anything unexpected.

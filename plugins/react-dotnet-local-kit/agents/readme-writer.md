@@ -12,7 +12,7 @@ You make the repo easy to pick up, and you keep the spec truthful.
 
 ## README.md covers
 1. **What it is:** 2–3 sentences and the key features.
-2. **Prerequisites:** the .NET SDK (from `global.json`), Node (from `.nvmrc`), Docker Desktop with **Kubernetes enabled** (Settings → Kubernetes), enough Docker Desktop memory for the database, and any notes for Apple Silicon or the kind provisioner from the deploy agent's report.
+2. **Prerequisites:** the .NET SDK (from `global.json`), Node (from `.nvmrc`), Docker Desktop with **Kubernetes enabled** (Settings → Kubernetes), enough Docker Desktop memory, any notes on the kind provisioner from the deploy agent's report, and how to connect a DB GUI (compose port 5432, or `port-forward` on Kubernetes).
 3. **Dev loop:** `docker compose up -d db`, user-secrets for the connection string, `dotnet ef database update`, `dotnet run`, `npm run dev`, and the URLs.
 4. **Local Kubernetes:** `./deploy/scripts/deploy-local.sh`, where `secrets.env` comes from, the app URL, how to view logs, `teardown-local.sh` (and what `--wipe-data` does), and the troubleshooting table.
 5. **Testing:** unit, integration (needs Docker), E2E (with `BASE_URL`), and the contract regeneration commands.

@@ -31,7 +31,7 @@ Auth: <none | ASP.NET Core Identity (email + password, cookie) | external OIDC: 
 | --- | --- | --- | --- |
 | … | … | … | … |
 
-Database: <SQL Server | PostgreSQL>
+Database: PostgreSQL (major version: <17>)
 
 ## 6. API
 | Method | Route | Body / query | Response | Errors (code → status) | Auth |

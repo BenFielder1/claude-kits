@@ -78,7 +78,7 @@ jobs:
 ## Repository hygiene
 - `.gitignore`: `bin/`, `obj/`, `node_modules/`, `dist/`, `TestResults/`, `playwright-report/`, `.env`, `deploy/k8s/overlays/local/secrets.env`, and `*.user`.
 - `.github/dependabot.yml`: `nuget` (`/backend`), `npm` (`/frontend`), `github-actions` (`/`), and `docker` (`/backend`, `/frontend`). Weekly.
-- Secret scan before commit: `git grep -nE "(Password=|pwd=|MSSQL_SA_PASSWORD=.+|BEGIN (RSA|OPENSSH) PRIVATE KEY)"` should only match `*.example` files.
+- Secret scan before commit: `git grep -nE "(Password=[^<;]+|POSTGRES_PASSWORD=.+|BEGIN (RSA|OPENSSH) PRIVATE KEY)"` should only match `*.example` files.
 
 ## Validate locally
 - Run each job's commands locally in the same order.

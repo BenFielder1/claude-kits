@@ -58,7 +58,7 @@ public static class OrdersEndpoints
 
 ## Tests
 - **Unit** (`<App>.UnitTests`): every domain rule and the spec's worked examples. Name tests after the requirement, e.g. `FR3_locking_a_shipped_order_fails`.
-- **Integration** (`<App>.IntegrationTests`): `WebApplicationFactory<Program>` plus a Testcontainers database of the same engine as production, with migrations applied (not `EnsureCreated`). Cover success, 400, 401, 403 (another user's resource), 404, and each error code. Add `public partial class Program;` if needed.
+- **Integration** (`<App>.IntegrationTests`): `WebApplicationFactory<Program>` plus a PostgreSQL Testcontainer (`Testcontainers.PostgreSql`), shared per test collection, with migrations applied (not `EnsureCreated`). Cover success, 400, 401, 403 (another user's resource), 404, and each error code. Add `public partial class Program;` if needed.
 - If Docker isn't available, say so. Don't substitute an in-memory provider for behaviour that depends on the database.
 
 ## Packages

@@ -1,22 +1,53 @@
 ---
 name: efcore-data
-description: Use when changing the backend's persistence with Microsoft EF Core and the dotnet-ef tool, covering entities, DbContext, configurations, migrations, seed data, queries, the dev database and how migrations run on local Kubernetes.
+description: Use when changing the backend's persistence with Microsoft EF Core, the dotnet-ef tool and PostgreSQL (Npgsql provider), covering entities, DbContext, configurations, migrations, seed data, queries, the dev database and how migrations run on local Kubernetes.
 ---
 
-# EF Core data and migrations
+# EF Core + PostgreSQL data and migrations
+
+The database is **PostgreSQL**, accessed through EF Core's Npgsql provider. All schema work still goes through `dotnet ef`: migrations, scripts, bundles and `database update` work exactly as they do with other providers.
 
 ## Setup (once, done by the scaffolder)
-- Install the tool locally: `dotnet new tool-manifest` (in `backend/`), then `dotnet tool install dotnet-ef`. Run it as `dotnet ef …` (or `dotnet dotnet-ef …`), at the version that matches the EF Core packages.
-- Use one provider package, following the spec: `Microsoft.EntityFrameworkCore.SqlServer` (the default) or `Npgsql.EntityFrameworkCore.PostgreSQL`. Add `Microsoft.EntityFrameworkCore.Design` to the startup project (`<App>.Api`).
-- Register `AddDbContext<AppDbContext>(o => o.Use<Provider>(config.GetConnectionString("Default")))`.
-- **Dev database:** the `db` service in `docker-compose.yml`, with the connection string in user-secrets (`dotnet user-secrets set ConnectionStrings:Default "…" --project src/<App>.Api`).
-  - SQL Server: `mcr.microsoft.com/mssql/server:2022-latest` (or the current GA tag), with `ACCEPT_EULA=Y`, an `MSSQL_SA_PASSWORD` from `.env`, and a health check. On Apple Silicon, it runs under Docker Desktop's x86 emulation, and start-up is slower.
-  - PostgreSQL: `postgres:<major>`, with `POSTGRES_PASSWORD` from `.env`.
+- **The tool:** install it locally with `dotnet new tool-manifest` (in `backend/`), then `dotnet tool install dotnet-ef`. Run it as `dotnet ef …`, at a version matching the EF Core packages.
+- **Packages:**
+  - `Npgsql.EntityFrameworkCore.PostgreSQL` in Infrastructure, with its major version matching the EF Core major version.
+  - `Microsoft.EntityFrameworkCore.Design` in the startup project (`<App>.Api`).
+  - Recommended: `EFCore.NamingConventions`, for snake_case tables and columns, which are idiomatic in Postgres and avoid quoting `"PascalCase"` names in raw SQL.
+- **Register:**
+  ```csharp
+  builder.Services.AddDbContext<AppDbContext>(o => o
+      .UseNpgsql(builder.Configuration.GetConnectionString("Default"))
+      .UseSnakeCaseNamingConvention());
+  ```
+  For health checks use `AddDbContextCheck<AppDbContext>()`, or the `AspNetCore.HealthChecks.NpgSql` package if the repo prefers it.
+- **Connection string** (Npgsql format): `Host=localhost;Port=5432;Database=<app>;Username=<app>;Password=<from secrets>`. In Kubernetes, use `Host=db`. In the dev loop it lives in user-secrets: `dotnet user-secrets set ConnectionStrings:Default "…" --project src/<App>.Api`.
+- **Dev database:** the `db` service in `docker-compose.yml`:
+  - Pin a major version of the official `postgres` image. `postgres:17` is a safe default, and the images are multi-arch, so it runs natively on Apple Silicon.
+  - Set `POSTGRES_DB`, `POSTGRES_USER` and `POSTGRES_PASSWORD` from `.env`, and map port `5432:5432`.
+  - Use a health check of `pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB`, and a named volume.
+  - Mount the volume at the data path the image documents for that major version. Postgres 18+ images changed the default data directory, so check the image docs when you change major.
 
 ## Model
 - Configure entities with `IEntityTypeConfiguration<T>`, applied by `modelBuilder.ApplyConfigurationsFromAssembly(...)`.
-- Be explicit: `HasMaxLength`, required/optional, `HasPrecision` for decimals, indexes for foreign keys and query predicates, unique indexes for business uniqueness (including filtered or case-insensitive ones, e.g. a case-insensitive collation on SQL Server or `citext` / `lower()` on PostgreSQL), and `OnDelete` behaviour.
-- Add a concurrency token on aggregates that are edited concurrently (`IsRowVersion()` on SQL Server, `xmin` / a version column on PostgreSQL). It maps to 409 `CONFLICT` in the API.
+- Be explicit: `HasMaxLength` (it maps to `varchar(n)`; use `text` when there's no limit), required/optional, `HasPrecision` for decimals (`numeric(p,s)`), indexes for foreign keys and query predicates, unique indexes for business uniqueness, and `OnDelete` behaviour.
+- **Case-insensitive uniqueness** (e.g. usernames, display names): use the `citext` extension:
+  ```csharp
+  modelBuilder.HasPostgresExtension("citext");
+  builder.Property(x => x.DisplayName).HasColumnType("citext").HasMaxLength(24);
+  builder.HasIndex(x => new { x.RoomId, x.DisplayName }).IsUnique();
+  ```
+  Alternatively, use a non-deterministic ICU collation (`modelBuilder.HasCollation(...)`). Note that Postgres restricts `LIKE` on non-deterministic collations, so `citext` is the simpler default.
+- **Filtered (partial) unique indexes** are supported: `.HasFilter("status = 'active'")`. Write the filter in the database's column names, which are snake_case with the naming convention.
+- **Concurrency token:** map PostgreSQL's built-in `xmin` system column, which needs no extra column:
+  ```csharp
+  public uint Version { get; set; }                     // on the entity
+  builder.Property(x => x.Version).IsRowVersion();      // Npgsql maps this to xmin
+  ```
+  A conflict raises `DbUpdateConcurrencyException`, which maps to 409 `CONFLICT` in the API.
+- **Dates and times:** `timestamp with time zone` (the default for `DateTime` and `DateTimeOffset`) accepts **UTC only**. Npgsql throws for `DateTime` values with `Kind=Local` or `Unspecified`. Use `DateTimeOffset`, or `DateTime` in UTC from `TimeProvider.GetUtcNow()`. Use `DateOnly` and `TimeOnly` for dates and times without an instant.
+- **Enums:** store them as strings by default (`.HasConversion<string>()`). Only use native Postgres enums (`MapEnum`) if the spec asks for them, because changing them needs migrations.
+- **JSON:** use `jsonb` columns (`.ToJson()` owned types, or `HasColumnType("jsonb")`) for genuinely schemaless data only. Relational columns come first.
+- **Identifiers:** use `Guid` keys (generated by the app, e.g. `Guid.CreateVersion7()` for index-friendly ordering), or `int`/`long` identity columns (Npgsql uses `GENERATED BY DEFAULT AS IDENTITY`).
 - Keep **derived values derived**. Compute them in queries or the domain rather than storing them, unless the spec says otherwise.
 - Queries: use `AsNoTracking()` for reads, project with `Select` to DTOs, paginate lists, and avoid N+1 (project rather than `Include` chains). Raw SQL only through `FromSql($"…")`, which is parameterised.
 
@@ -30,6 +61,10 @@ dotnet ef database update --project src/<App>.Infrastructure --startup-project s
 - Give migrations descriptive names, and **review the SQL** for drops, table rebuilds and data loss. Summarise anything risky in your report.
 - Never edit a committed migration, and never hand-edit the model snapshot. Migrations are **serial-only**.
 - **Rolling-update safety**: Kubernetes runs old and new API pods side by side during a rollout. Prefer additive changes (nullable or defaulted columns, new tables). For renames, drops and type changes, use expand/contract across two phases or releases, and note the follow-up.
+- **Postgres specifics:**
+  - DDL is transactional in Postgres, so a failed migration rolls back cleanly.
+  - `CREATE INDEX CONCURRENTLY` can't run inside a transaction. Use `migrationBuilder.Sql("CREATE INDEX CONCURRENTLY …", suppressTransaction: true)` for large tables, and only where it's needed. Locally it rarely is.
+  - Adding a column with a non-volatile default is cheap in modern Postgres. Changing a column's type rewrites the table.
 
 ## Seed data
 - Use `HasData` only for true reference data (lookup tables).
@@ -41,9 +76,13 @@ dotnet ef database update --project src/<App>.Infrastructure --startup-project s
 - Coordinate any change to this mechanism with `local-k8s-engineer`.
 
 ## Tests
-Integration tests start a Testcontainers database of the same engine and apply the real migrations (`Database.MigrateAsync()`), so the migrations themselves are tested.
+- **Real database:** integration tests use `Testcontainers.PostgreSql` (`new PostgreSqlBuilder().WithImage("postgres:<same major as compose>").Build()`) and apply the real migrations with `Database.MigrateAsync()`, so the migrations themselves are tested.
+- **Container lifetime:** share one container per test collection (an xUnit collection fixture). Reset data between tests, by truncating tables or using unique data per test, rather than starting a new container each time.
+- **No stand-ins:** never use the InMemory or SQLite providers in place of Postgres for behaviour that depends on the database (constraints, `citext`, `xmin`, `jsonb`, transactions).
 
 ## Checklist
+- [ ] Npgsql provider and snake_case naming are configured, and `dotnet ef` commands work against the dev DB.
+- [ ] Timestamps are UTC (`DateTimeOffset` or UTC `DateTime`), and the `citext`/collation and `xmin` concurrency token are used where the spec needs them.
 - [ ] Explicit configuration (lengths, precision, indexes, delete behaviour, concurrency).
 - [ ] One well-named migration, with its SQL reviewed and safe for rolling updates (or the follow-up noted).
 - [ ] The dev DB was updated, and the integration tests run against migrations.
