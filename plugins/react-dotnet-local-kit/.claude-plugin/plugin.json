@@ -1,0 +1,7 @@
+{
+  "name": "react-dotnet-local-kit",
+  "version": "1.0.0",
+  "description": "Single-repo, spec-driven build kit for React + Vite + TypeScript and ASP.NET Core + EF Core apps on GitHub, deployed locally to Docker Desktop Kubernetes. Orchestrator, stack skills and specialised SDLC subagents.",
+  "author": { "name": "Ben" },
+  "keywords": ["react", "vite", "typescript", "dotnet", "aspnetcore", "efcore", "github", "kubernetes", "docker-desktop", "subagents"]
+}
