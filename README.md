@@ -6,6 +6,7 @@ A Claude Code plugin marketplace.
 | --- | --- |
 | `nextjs-supabase-kit` | Next.js · TypeScript · Tailwind · Supabase · GitHub · Vercel |
 | `react-dotnet-k8s-kit` | React · Vite · .NET · GitLab · Kubernetes · ArgoCD |
+| `react-dotnet-local-kit` | React · Vite · .NET · EF Core · GitHub · Docker Desktop Kubernetes (single repo) |
 
 ## Install
 
@@ -13,6 +14,7 @@ A Claude Code plugin marketplace.
 /plugin marketplace add BenFielder1/claude-kits
 /plugin install nextjs-supabase-kit@bens-claude-kits
 /plugin install react-dotnet-k8s-kit@bens-claude-kits
+/plugin install react-dotnet-local-kit@bens-claude-kits
 ```
 
 ## Releasing a change

@@ -12,6 +12,11 @@
       "name": "react-dotnet-k8s-kit",
       "source": "./plugins/react-dotnet-k8s-kit",
       "description": "React/Vite + .NET on GitLab, Kubernetes/ArgoCD: spec-from-jira, multi-repo orchestrator, stack skills, SDLC subagents"
+    },
+    {
+      "name": "react-dotnet-local-kit",
+      "source": "./plugins/react-dotnet-local-kit",
+      "description": "Single repo React/Vite + ASP.NET Core/EF Core on GitHub, deployed to Docker Desktop Kubernetes: build-from-spec orchestrator, stack skills, SDLC subagents"
     }
   ]
 }
